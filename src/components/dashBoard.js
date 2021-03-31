@@ -1,5 +1,5 @@
 import React , {useEffect, useState}from 'react';
-import { makeStyles, useTheme } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import Dialog from '@material-ui/core/Dialog';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -10,7 +10,6 @@ import AccountTemplate from './Template/accountTemplate';
 import AddAccountTemplate from './Template/addAccountTemplate';
 import axios from "axios";
 import {
-  useMediaQuery,
   Button,
   List,
   ListItem,
@@ -34,23 +33,31 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 });
 
 const api = {
-  urlGet: "https://dev.geo.sdis67.com/api/v1/public/allUsers"
+  urlGetUser: "https://dev.geo.sdis67.com/api/v1/public/allUsers",
+  urlGetCities: "https://dev.geo.sdis67.com/api/v1/app/erp/cities"
 };
 export default function DashBoard(props) {
   const classes = useStyles();
   const [selectedRow, setSelectedRow] = useState(null);
   const [open, setOpen] = useState(false);
-  const [apiData, setApiData]= useState(null)
+  const [apiData, setApiData]= useState(null);
+  const [cities, setCities]= useState(null);
   const [openAddAccount, setOpenAddAccount] = React.useState(false);
-  const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const getAPIData = async () => {
-    const res = await axios.get(`${api.urlGet}`);
+    const res = await axios.get(`${api.urlGetUser}`);
     setApiData(res.data.data)
   };
   useEffect(() => {
     console.log("getapi");
     getAPIData();
+  }, []);
+  const getCities = async () => {
+    const res = await axios.get(`${api.urlGetCities}`);
+    setCities(res.data.data.cities);
+  }
+  useEffect(() => {
+    console.log("getCities");
+    getCities();
   }, []);
   console.warn("apirequest", apiData);
   const handleClickSetDialog = (e, data) => {
@@ -65,14 +72,14 @@ export default function DashBoard(props) {
     setOpenAddAccount(false);
   };
   const addAcount = (
-    <AddAccountTemplate apiData= {apiData}/>
+    <AddAccountTemplate apiData= {apiData} city={cities}/>
   );
   return (
     <div>
       {apiData &&
         apiData.map((data) => {
           return (
-            <>
+            <div key={data.id}>
               <Button
                 onClick={(e) => {
                 handleClickSetDialog(e, data);
@@ -80,7 +87,7 @@ export default function DashBoard(props) {
               >
                 <Paper variant="outlined">
                   <List dense>
-                    <ListItem>
+                    <ListItem >
                       <ListItemAvatar>
                         <Avatar>Nom</Avatar>
                       </ListItemAvatar>
@@ -90,16 +97,19 @@ export default function DashBoard(props) {
                 </Paper>
               </Button>
               <br/>
-            </>
+            </div>
           );
       })}
       {selectedRow && (
-        <AccountTemplate
-          selectedRow={selectedRow}
-          open={open}
-          onClickClose={handleClose}
-          fullScreen={fullScreen}
-        />
+        <div>
+          <AccountTemplate
+            selectedRow={selectedRow}
+            open={open}
+            onClickClose={handleClose}
+            city={cities}
+
+          />
+        </div>
       )}
       <Button variant="outlined" color="primary" onClick={handleClickOpenAddAccount}>
         Ajouter un profil

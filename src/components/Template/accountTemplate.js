@@ -1,22 +1,28 @@
 import React from "react";
 import {
   Dialog,
-  Grid,
   DialogActions,
+  Grid,
   DialogContent,
-  DialogContentText,
-  DialogTitle,
   Button,
   TextField,
-  Modal
+  Modal,
+  Slide,
+  Typography,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Container
 } from "@material-ui/core";
+import CloseIcon from '@material-ui/icons/Close';
+import Autocomplete from '@material-ui/lab/Autocomplete';
 import { makeStyles } from '@material-ui/core/styles';
 function rand() {
   return Math.round(Math.random() * 20) - 10;
 }
 
 function getModalStyle() {
-  const top = 90 + rand();
+  const top = 50 + rand();
   const left = 50 + rand();
 
   return {
@@ -35,53 +41,76 @@ const useStyles = makeStyles((theme) => ({
     boxShadow: theme.shadows[5],
     padding: theme.spacing(2, 4, 3),
   },
+  appBar: {
+    position: 'relative',
+  },
+  title: {
+    marginLeft: theme.spacing(2),
+    flex: 1,
+  },
 }));
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
+
 export default function DialogTable(props) {
-  const { selectedRow, open, onClickClose, fullScreen } = props;
-  console.warn("selectrow", selectedRow);
+  const { selectedRow, open, city , onClickClose} = props;
   const [openModal, setOpenModal] = React.useState(false);
   const classes = useStyles();
   const [modalStyle] = React.useState(getModalStyle);
-  const [identity, setIdentity] = React.useState([{
+  const [identity, setIdentity] = React.useState({
     id: selectedRow.id,
-    firstName: "",
-    lastName: "",
-    email: "",
-  }]);
-  const [password, setPassword] = React.useState([{
+    firstName: selectedRow.firstName,
+    lastName: selectedRow.lastName,
+    email: selectedRow.email,
+    registrationNumber: selectedRow.registrationNumber,
+    cities: selectedRow.cities,
+  });
+  const [password, setPassword] = React.useState({
     id: selectedRow.id,
-    oldPassword: "",
-    password: "",
-  }])
+    oldPassword:null ,
+    password: null,
+  })
 
   const handleOpen = () => {
     setOpenModal(true);
   };
-
   const handleClose = () => {
     setOpenModal(false);
   };
   const handleChangePasswords = (event) => {
     if (event.target.name === "oldPassword") {
-      setPassword({oldPassword: event.target.value});
+      password.oldPassword = event.target.value;
+      
     } else {
-      setPassword({password: event.target.value});
+      password.password = event.target.value;
+      
     }
+    setPassword(password);
   };
-  const handleChangeIdentity = (index, event) => {
-    const values = [...identity];
-    if (event.target.name === "firstName") {
-      values[index].firstName = event.target.value;
+  const handleChangeIdentity = ( event, value, reason) => {
+    
+    if(event.target.name === "firstName") {
+      identity.firstName = event.target.value;
     } else if(event.target.name === "lastName") {
-      values[index].lastName = event.target.value;
-    }else{
-      values[index].email= event.target.value;
+      identity.lastName = event.target.value;
+    }else if(event.target.name === "email"){
+      identity.email= event.target.value;
+    }else if (event.target.name === "registrationNumber"){
+      identity.registrationNumber = event.target.value;
+    }else if (event.target.name === "cities"){
+      console.log(value)
+      identity.cities = value
     }
-
-    setIdentity(values);
+    setIdentity(identity);
   };
-  console.warn("Identity", identity);
-  console.warn("password", password);
+  console.warn("identity", identity)
+  const putPasswordsApi = ()=>{
+
+  };
+  const putIdentityApi = ()=>{
+  
+  };
   const body = (
     <div style={modalStyle} className={classes.paper}>
       <Grid container spacing={3}>
@@ -91,7 +120,7 @@ export default function DialogTable(props) {
             name="oldPassword"
             label="Ancien mot de passe"
             variant="outlined"
-            onChange={(index, event )=>{handleChangePasswords(index, event)}}
+            onChange={(event )=>{handleChangePasswords(event)}}
             fullWidth
             required
           />
@@ -102,7 +131,7 @@ export default function DialogTable(props) {
             name="password"
             label="changer de mot de passe"
             variant="outlined"
-            onChange={(index, event )=>{handleChangePasswords(index, event)}}
+            onChange={( event )=>{handleChangePasswords(event)}}
             fullWidth
             required
           />
@@ -118,38 +147,47 @@ export default function DialogTable(props) {
           />
         </Grid>
       </Grid>
-      <Button autoFocus color="primary">
+      <Button autoFocus color="primary" onClick={putPasswordsApi}>
         Sauvegarder
       </Button>
     </div>
   );
+
   return (
     <div style={{ maxWidth: "100%" }}>
       {selectedRow && (
         <Dialog
-          fullScreen={fullScreen}
+          fullScreen
           open={open}
           onClose={onClickClose}
-          aria-labelledby="responsive-dialog-title"
-          size="xl"
+          TransitionComponent={Transition}
           fullWidth
-          maxWidth="xl"
         >
-          <DialogTitle id="responsive-dialog-title">
-            {`profil && id:  ${selectedRow.id}`}
-          </DialogTitle>
+          <AppBar className={classes.appBar}>
+          <Toolbar>
+            <DialogActions>
+              <IconButton edge="start" color="inherit" onClick={onClickClose} aria-label="close">
+                <CloseIcon />
+              </IconButton>
+              <Button autoFocus color="inherit" onClick={putIdentityApi}>
+                Sauvegarder
+              </Button>
+            </DialogActions>
+          </Toolbar>
+        </AppBar>
+
           <DialogContent>
-            <DialogContentText>
+            <Container maxWidth="xl">
               <Grid container spacing={3}>
                 <Grid item xs={12} sm={6}>
                   <TextField
                     id="firstName"
-                    name="fistName"
+                    name="firstName"
                     label="Prénom"
                     fullWidth
                     variant="outlined"
-                    onChange={(index, event )=>{handleChangeIdentity(index, event)}}
-                    value={selectedRow.firstName}
+                    defaultValue={selectedRow.firstName}
+                    onChange={(event )=>{handleChangeIdentity( event)}}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -158,8 +196,8 @@ export default function DialogTable(props) {
                     name="lastName"
                     label="Nom"
                     variant="outlined"
-                    onChange={(index, event )=>{handleChangeIdentity(index, event)}}
-                    value={selectedRow.lastName}
+                    defaultValue={selectedRow.lastName}
+                    onChange={( event )=>{handleChangeIdentity(event)}}
                     fullWidth
                   />
                 </Grid>
@@ -169,15 +207,58 @@ export default function DialogTable(props) {
                     name="eMail"
                     label="Email"
                     variant="outlined"
-                    onChange={(index, event )=>{handleChangeIdentity(index, event)}}
-                    value={selectedRow.email}
+                    defaultValue={selectedRow.email}
+                    onChange={( event )=>{handleChangeIdentity( event)}}
                     fullWidth
                   />
                 </Grid>
-                <button type="button" onClick={handleOpen}>
-                  changer de Mot de passe
-                </button>
-                <Modal
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    id="average"
+                    name="average"
+                    label="Moyenne"
+                    fullWidth
+                    variant="outlined"
+                    defaultValue={selectedRow.average}
+                    disabled
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    id="registrationNumber"
+                    name="registrationNumber"
+                    label="Matricule"
+                    variant="outlined"
+                    defaultValue={selectedRow.registrationNumber}
+                    onChange={( event )=>{handleChangeIdentity(event)}}
+                    fullWidth
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Autocomplete
+                    multiple
+                    id="cities"
+                    name="cities"
+                    options={city}
+                    getOptionLabel={(option) => option.name}
+                    defaultValue={selectedRow.cities[0] &&[selectedRow.cities[0]]}
+                    onChange={(event, value, reason)=>{handleChangeIdentity(event, value, reason)}}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        variant="outlined"
+                        label="Villes"
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <button type="button" onClick={handleOpen}>
+                    changer de Mot de passe
+                  </button>
+                </Grid>
+              </Grid>
+              <Modal
                   open={openModal}
                   onClose={handleClose}
                   aria-labelledby="simple-modal-title"
@@ -185,17 +266,8 @@ export default function DialogTable(props) {
                 >
                   {body}
                 </Modal>
-              </Grid>
-            </DialogContentText>
+            </Container>
           </DialogContent>
-          <DialogActions>
-            <Button autoFocus onClick={onClickClose} color="primary">
-              Close
-            </Button>
-            <Button autoFocus color="primary">
-              Sauvegarder
-            </Button>
-          </DialogActions>
         </Dialog>
       )}
     </div>
