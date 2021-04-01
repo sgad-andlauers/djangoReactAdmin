@@ -15,8 +15,10 @@ import {
   Container
 } from "@material-ui/core";
 import CloseIcon from '@material-ui/icons/Close';
+import DeleteForeverOutlinedIcon from '@material-ui/icons/DeleteForeverOutlined';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import { makeStyles } from '@material-ui/core/styles';
+import axios from "axios";
 function rand() {
   return Math.round(Math.random() * 20) - 10;
 }
@@ -54,8 +56,9 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 });
 
 export default function DialogTable(props) {
-  const { selectedRow, open, city , onClickClose} = props;
+  const { selectedRow, open, city , onClickClose, setOpen, permissions, group } = props;
   const [openModal, setOpenModal] = React.useState(false);
+  const [openModalDelete, setOpenModalDelete] = React.useState(false);
   const classes = useStyles();
   const [modalStyle] = React.useState(getModalStyle);
   const [identity, setIdentity] = React.useState({
@@ -77,6 +80,7 @@ export default function DialogTable(props) {
   };
   const handleClose = () => {
     setOpenModal(false);
+    setOpenModalDelete(false);
   };
   const handleChangePasswords = (event) => {
     if (event.target.name === "oldPassword") {
@@ -88,8 +92,7 @@ export default function DialogTable(props) {
     }
     setPassword(password);
   };
-  const handleChangeIdentity = ( event, value, reason) => {
-    
+  const handleChangeIdentity = ( event) => {
     if(event.target.name === "firstName") {
       identity.firstName = event.target.value;
     } else if(event.target.name === "lastName") {
@@ -98,18 +101,23 @@ export default function DialogTable(props) {
       identity.email= event.target.value;
     }else if (event.target.name === "registrationNumber"){
       identity.registrationNumber = event.target.value;
-    }else if (event.target.name === "cities"){
-      console.log(value)
-      identity.cities = value
     }
     setIdentity(identity);
   };
-  console.warn("identity", identity)
-  const putPasswordsApi = ()=>{
+  const handleChangeCities =(event, value, reason) => {
+    identity.cities = value;
+    setIdentity(identity);
 
+  }
+  const putPasswordsApi = async ()=>{
+    console.log("putPassword")
+    await axios.put('https://dev.geo.sdis67.com/api/v1/public/user', password);
+    setOpenModal(false)
   };
-  const putIdentityApi = ()=>{
-  
+  const putIdentityApi = async ()=>{
+    console.log("putIdentity")
+     await axios.put('https://dev.geo.sdis67.com/api/v1/public/user', identity);
+     setOpen(false);
   };
   const body = (
     <div style={modalStyle} className={classes.paper}>
@@ -152,7 +160,23 @@ export default function DialogTable(props) {
       </Button>
     </div>
   );
-
+ const handleDeleteProfile = ()=> {
+   setOpenModalDelete(true);
+ };
+ const deleteProfile = async ()=> { 
+  alert("profil supprimé !!");
+  setOpenModalDelete(false);
+  setOpen(false);
+};
+ const bodyDelete = (
+    <div style={modalStyle} className={classes.paper}>
+      <p>Attention voulez vous vraiment supprimer ce compte ?</p>
+      <Button autoFocus color="primary" onClick={deleteProfile}>
+        Suppression
+      </Button>
+    </div>
+  );
+  
   return (
     <div style={{ maxWidth: "100%" }}>
       {selectedRow && (
@@ -169,15 +193,20 @@ export default function DialogTable(props) {
               <IconButton edge="start" color="inherit" onClick={onClickClose} aria-label="close">
                 <CloseIcon />
               </IconButton>
+              <Typography variant="h6"gutterBottom className={classes.title}>Modifier un profil</Typography>
               <Button autoFocus color="inherit" onClick={putIdentityApi}>
                 Sauvegarder
               </Button>
+              <IconButton  color="inherit" onClick={handleDeleteProfile} aria-label="delete">
+                <DeleteForeverOutlinedIcon />
+              </IconButton>
             </DialogActions>
           </Toolbar>
         </AppBar>
 
           <DialogContent>
             <Container maxWidth="xl">
+              <Typography variant="h6"gutterBottom>Informations personnelles</Typography>
               <Grid container spacing={3}>
                 <Grid item xs={12} sm={6}>
                   <TextField
@@ -204,7 +233,7 @@ export default function DialogTable(props) {
                 <Grid item xs={12}>
                   <TextField
                     id="eMail"
-                    name="eMail"
+                    name="email"
                     label="Email"
                     variant="outlined"
                     defaultValue={selectedRow.email}
@@ -242,7 +271,7 @@ export default function DialogTable(props) {
                     options={city}
                     getOptionLabel={(option) => option.name}
                     defaultValue={selectedRow.cities[0] &&[selectedRow.cities[0]]}
-                    onChange={(event, value, reason)=>{handleChangeIdentity(event, value, reason)}}
+                    onChange={(event, value, reason)=>{handleChangeCities(event, value, reason)}}
                     renderInput={(params) => (
                       <TextField
                         {...params}
@@ -265,6 +294,14 @@ export default function DialogTable(props) {
                   aria-describedby="simple-modal-description"
                 >
                   {body}
+                </Modal>
+                <Modal
+                  open={openModalDelete}
+                  onClose={handleClose}
+                  aria-labelledby="simple-modal-title"
+                  aria-describedby="simple-modal-description"
+                >
+                  {bodyDelete}
                 </Modal>
             </Container>
           </DialogContent>
