@@ -11,7 +11,7 @@ import {
     AppBar,
     Toolbar,
     IconButton,
-    Container
+    Container,
   } from "@material-ui/core";
   import CloseIcon from '@material-ui/icons/Close';
   import Autocomplete from '@material-ui/lab/Autocomplete';
@@ -40,8 +40,7 @@ import {
 
 export default function CreateGroup(props) {
     const classes = useStyles();
-    const {open, onClickClose, permissions, onChangeGroupe, onChangePermissionsGroup, onSubmitGroup} = props;
-
+    const {open, onClickClose, permissions, onChangeGroupe, onChangePermissionsGroup, onSubmitGroup, selectedGroup, onSaveGroup, onModificateGroup} = props;
   return (
     <div style={{ maxWidth: "100%" }}>
       <Dialog
@@ -63,16 +62,22 @@ export default function CreateGroup(props) {
                 <Button autoFocus color="inherit" onClick={onSubmitGroup} >
                 Créer le groupe
                 </Button>
+                <Button autoFocus color="inherit" onClick={onSaveGroup} >
+                Sauvegarder le groupe
+                </Button>
             </DialogActions>
             </Toolbar>
         </AppBar>
         <DialogContent>
             <Container maxWidth="xl">
+                <Typography variant="subtitle1" className={classes.title}>
+                  Creation d'un groupe
+                </Typography>
                 <Grid container spacing={3}>
                     <Grid item xs={12} sm={6}>
                             <TextField
                                 id="GroupName"
-                                name="Name"
+                                name="name"
                                 label="Nom du groupe"
                                 fullWidth
                                 variant="outlined"
@@ -82,24 +87,62 @@ export default function CreateGroup(props) {
                     <Grid item xs={12}>
                         <Autocomplete
                             multiple
-                            id="cities"
-                            name="cities"
-                            options={permissions.permissions}
+                            id="permission"
+                            name="permission"
+                            options={permissions}
                             getOptionLabel={(option) => option.name}
                             onChange={(event, value, reason)=>{onChangePermissionsGroup(event, value, reason)}}
                             renderInput={(params) => (
                                 <TextField
                                     {...params}
                                     variant="outlined"
-                                    label="Villes"
+                                    label="Permission"
                                 />
                             )}
                         />
                     </Grid>
                 </Grid>
+                <Typography variant="subtitle1" className={classes.title}>
+                  Modifications d'un groupe
+                </Typography>
+                {selectedGroup &&
+                  <Grid container spacing={3}>
+                      <Grid item xs={12} sm={6}>
+                              <TextField
+                                  id="GroupName"
+                                  name="name"
+                                  label="Nom du groupe"
+                                  fullWidth
+                                  variant="outlined"
+                                  defaultValue={selectedGroup.groupRelated.name}
+                                  onChange={(event )=>{onModificateGroup( event)}}
+                              />
+                      </Grid>
+                      <Grid item xs={12}>
+                          <Autocomplete
+                              multiple
+                              id="permission"
+                              name="permission"
+                              options={permissions}
+                              getOptionLabel={(option) => option.name}
+                              defaultValue={selectedGroup.groupRelated.permissions}
+                              onChange={(event, value, reason)=>{onChangePermissionsGroup(event, value, reason)}}
+                              renderInput={(params) => (
+                                  <TextField
+                                      {...params}
+                                      variant="outlined"
+                                      label="Permission"
+                                  />
+                              )}
+                          />
+                      </Grid>
+                  </Grid>
+                }
             </Container>
+           
         </DialogContent>
     </Dialog>
+
   </div>
   );
 }

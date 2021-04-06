@@ -21,6 +21,7 @@ import {
   ListItemText,
   Avatar,
   Paper,
+  Grid
 } from "@material-ui/core";
 const useStyles = makeStyles((theme) => ({
   appBar: {
@@ -45,6 +46,7 @@ const api = {
 export default function DashBoard(props) {
   const classes = useStyles();
   const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedGroup, setSelectedGroup] = useState(null);
   const [openAccount, setOpenAccount] = useState(false);
   const [openGroup, setOpenGroup] = useState(false);
   const [apiData, setApiData]= useState(null);
@@ -65,10 +67,16 @@ export default function DashBoard(props) {
     territorialUnity: "",
   });
   const [createGroup, setCreateGroup] = useState({
-    Name: "",
+    name: "",
     permissions:[],
 
-  })
+  });
+  const [modificatedGroup, setModificatedGroup] = useState({
+    id: null,
+    name: "",
+    permissions:[],
+
+  });
   const [permissionGroup, setPermissionGroup]= useState(null);
 
 /** -------------------------------------------------- Questionnement de l'Api ------------------------------------------------------------ */
@@ -90,7 +98,7 @@ export default function DashBoard(props) {
   }, []);
   const getAPIDataGroup = async () => {
     const res = await axios.get(`${api.urlGroup}`);
-    setApiDataGroup(res.data.data)
+    setApiDataGroup(res.data.data.groups)
   };
   useEffect(() => {
     console.log("getApiDataGroup");
@@ -98,7 +106,7 @@ export default function DashBoard(props) {
   }, []);
   const getAPIDataPermissions = async () => {
     const res = await axios.get(`${api.urlGetPermissions}`);
-    setApiDataPermissions(res.data.data)
+    setApiDataPermissions(res.data.data.permissions);
   };
   useEffect(() => {
     console.log("getApiDataPermissions");
@@ -175,10 +183,13 @@ console.log("permission", apiDataPermissions);
   }
   /** -------------------------------------------------- Fin des functions pour le template addAcount ------------------------------------------------------------ */
   /** ----------------------------------------------------------- Function for group create ---------------------------------------------------------------------- */
-  const handleClickSetDialogGroup = ()=> {
+  const handleClickSetDialogGroup = (data)=> {
     setOpenGroup(true);
+    setSelectedGroup(data);
+    
 
   };
+  console.log("selectedGroup", selectedGroup);
   const handleChangePermissionsGroup = (event, value, reason)=>{
     let permissions = value;
     setPermissionGroup(permissions);
@@ -190,49 +201,105 @@ console.log("permission", apiDataPermissions);
     permissionGroup && 
     permissionGroup.map((d)=>array.push(d.id));
     createGroup.permissions = array;
+    modificatedGroup.permissions = array;
+    setModificatedGroup(modificatedGroup);
     setCreateGroup(createGroup);
    
-  }, [permissionGroup, createGroup]);
-
+  }, [permissionGroup, createGroup, modificatedGroup]);
+  useEffect(() => {
+    console.log("getModificateId");
+    if(selectedGroup != null){
+      modificatedGroup.id = selectedGroup.id;
+    setModificatedGroup(modificatedGroup);
+  }
+  }, [modificatedGroup, selectedGroup]);
   const handleChangeGroup =(event)=> {
-    if (event.target.name === "Name") {
-      createGroup.Name = event.target.value;
+    if (event.target.name === "name") {
+      createGroup.name = event.target.value;
     }
     setCreateGroup(createGroup);
   };
+  const handleModificateGroup =(event)=> {
+    if (event.target.name === "name") {
+      modificatedGroup.name = event.target.value;
+      
+    }
+    setModificatedGroup(modificatedGroup);
+  };
 const handleSubmitGroup =async ()=>{
   console.log("postGroupe")
-
-    await axios.post('https://dev.geo.sdis67.com/api/v1/public/group', createGroup).then(res => {
-      console.log(res);})
+  await axios.post('https://dev.geo.sdis67.com/api/v1/public/group', createGroup).then(res => {   
+    console.log(res);
+  });
+  setOpenGroup(false);
+};
+const handleSaveGroup =async ()=>{
+  console.log("postGroupe")
+  await axios.put('https://dev.geo.sdis67.com/api/v1/public/group', modificatedGroup)
+  setOpenGroup(false);
 };
   /** ---------------------------------------------------Fin des functions for group create ---------------------------------------------------------------------- */
   return (
     <div>
-      {apiData &&
-        apiData.map((data) => {
-          return (
-            <div key={data.id}>
-              <Button
-                onClick={(e) => {
-                handleClickSetDialog(e, data);
-                }}
-              >
-                <Paper variant="outlined">
-                  <List dense>
-                    <ListItem >
-                      <ListItemAvatar>
-                        <Avatar>Nom</Avatar>
-                      </ListItemAvatar>
-                      <ListItemText primary={`Nom:  ${data.lastName}  ${data.firstName}`} />
-                    </ListItem>
-                  </List>
-                </Paper>
-              </Button>
-              <br/>
-            </div>
-          );
-      })}
+      <Grid container spacing={3}>
+          <Grid item xs={12} sm={6}>  
+            <Typography variant="subtitle1" className={classes.title}>
+              Liste des Utilisateurs
+            </Typography>
+            {apiData &&
+              apiData.map((data) => {
+                return (
+                  <div key={data.id}>
+                    <Button
+                      onClick={(e) => {
+                      handleClickSetDialog(e, data);
+                      }}
+                    >
+                      <Paper variant="outlined">
+                        <List dense>
+                          <ListItem >
+                            <ListItemAvatar>
+                              <Avatar>Nom</Avatar>
+                            </ListItemAvatar>
+                            <ListItemText primary={`Nom:  ${data.lastName}  ${data.firstName}`} />
+                          </ListItem>
+                        </List>
+                      </Paper>
+                    </Button>
+                    <br/>
+                  </div>
+                );
+            })}
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="subtitle1" className={classes.title}>
+              Liste des Groupes
+            </Typography>
+            {apiDataGroup &&
+              apiDataGroup.map((data) => {
+                return (
+                  <div key={data.groupRelated.id}>
+                    <Button
+                      onClick={(e) => {
+                      handleClickSetDialogGroup(data);
+                      }}
+                    >
+                      <Paper variant="outlined">
+                        <List dense>
+                          <ListItem >
+                            <ListItemAvatar>
+                              <Avatar>Nom</Avatar>
+                              </ListItemAvatar>
+                              <ListItemText primary={`Nom:  ${data.groupRelated.name}`} />
+                            </ListItem>
+                          </List>
+                      </Paper>
+                    </Button>
+                  </div>
+                );
+            })}
+          </Grid>
+      </Grid>
       {selectedRow && (
         <div>
           <AccountTemplate
@@ -259,6 +326,9 @@ const handleSubmitGroup =async ()=>{
             onChangeGroupe = {handleChangeGroup}
             onChangePermissionsGroup={handleChangePermissionsGroup}
             onSubmitGroup={handleSubmitGroup}
+            selectedGroup={selectedGroup}
+            onSaveGroup={handleSaveGroup}
+            onModificateGroup={handleModificateGroup}
           />
         <Box ml={5} mt={5}>
           <Button variant="outlined" color="primary" onClick={handleClickOpenAddAccount}>
