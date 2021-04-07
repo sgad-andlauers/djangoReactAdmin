@@ -114,7 +114,7 @@ export default function CreateGroup(props) {
                                   label="Nom du groupe"
                                   fullWidth
                                   variant="outlined"
-                                  defaultValue={selectedGroup.groupRelated.name}
+                                  defaultValue={selectedGroup.name}
                                   onChange={(event )=>{onModificateGroup( event)}}
                               />
                       </Grid>
@@ -125,7 +125,6 @@ export default function CreateGroup(props) {
                               name="permission"
                               options={permissions}
                               getOptionLabel={(option) => option.name}
-                              defaultValue={selectedGroup.groupRelated.permissions}
                               onChange={(event, value, reason)=>{onChangePermissionsGroup(event, value, reason)}}
                               renderInput={(params) => (
                                   <TextField

@@ -4,13 +4,13 @@ import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import Container from '@material-ui/core/Container';
-
+import TransferList from './transferList';
 export default function AddAccountTemplate(props) {
-  const { city, changeCities, changeProfils, permissions, group} = props;
+  const { city, changeCities, changeProfils, permissions, group, onChangeGroupUser, onChangeUserPermissions} = props;
   return (
     <React.Fragment>
       <Container maxWidth="xl">
-      <Typography variant="subtitle1" gutterBottom>
+      <Typography variant="h6" gutterBottom>
         Informations personnelles
         </Typography>
         <Grid container spacing={3}>
@@ -131,6 +131,27 @@ export default function AddAccountTemplate(props) {
             />
           </Grid>
         </Grid>
+        <Typography variant="h6" gutterBottom>
+        Groupes et permissions
+        </Typography>
+        <Typography variant="subtitle1" gutterBottom>
+        Groupes
+        </Typography>
+        <TransferList
+          title="groupes"
+          value={group}
+          userValue={[]}
+          onChangeValue={onChangeGroupUser}
+        />
+         <Typography variant="subtitle1" gutterBottom>
+        Permissions
+        </Typography>
+        <TransferList
+          title="permissions"
+          value={permissions}
+          onChangeValue={onChangeUserPermissions}
+          userValue={[]}
+              />
       </Container>
     </React.Fragment>
   );

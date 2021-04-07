@@ -12,12 +12,14 @@ import {
   AppBar,
   Toolbar,
   IconButton,
-  Container
+  Container,
+
 } from "@material-ui/core";
 import CloseIcon from '@material-ui/icons/Close';
 import DeleteForeverOutlinedIcon from '@material-ui/icons/DeleteForeverOutlined';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import { makeStyles } from '@material-ui/core/styles';
+import TransferList from "./transferList";
 import axios from "axios";
 function rand() {
   return Math.round(Math.random() * 20) - 10;
@@ -50,6 +52,12 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: theme.spacing(2),
     flex: 1,
   },
+  paperGroup: {
+    width: 300,
+  },
+  paperPermissions: {
+    width: 380,
+  },
 }));
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -74,7 +82,18 @@ export default function DialogTable(props) {
     oldPassword:null ,
     password: null,
   })
-
+  const [userGroup, setUserGroup] = React.useState({
+    userId: selectedRow.id,
+    type: "",
+    object: "",
+    objectId: []
+  })
+  const [userPermissions, setUserPermissions] = React.useState({
+    userId: selectedRow.id,
+    type: "",
+    object: "",
+    objectId: []
+  })
   const handleOpen = () => {
     setOpenModal(true);
   };
@@ -117,6 +136,8 @@ export default function DialogTable(props) {
   const putIdentityApi = async ()=>{
     console.log("putIdentity")
      await axios.put('https://dev.geo.sdis67.com/api/v1/public/user', identity);
+     await axios.put("https://dev.geo.sdis67.com/api/v1/public/relations", userGroup);
+     await axios.put("https://dev.geo.sdis67.com/api/v1/public/relations", userPermissions);
      setOpen(false);
   };
   const body = (
@@ -168,6 +189,23 @@ export default function DialogTable(props) {
   setOpenModalDelete(false);
   setOpen(false);
 };
+const handleChangeUserGroup = (group)=>{
+  let array = [];
+  group && group.map((d)=>array.push(d.id));
+  userGroup.type = "add";
+  userGroup.object = "group";
+  userGroup.objectId = array;
+  setUserGroup(userGroup);
+}
+const handleChangeUserPermissions= (perm)=>{
+  let array = [];
+  perm && 
+  perm.map((d)=>array.push(d.id));
+  userPermissions.type = "add"
+  userPermissions.object = "permissions";
+  userPermissions.objectId = array;
+  setUserPermissions(userPermissions);
+}
  const bodyDelete = (
     <div style={modalStyle} className={classes.paper}>
       <p>Attention voulez vous vraiment supprimer ce compte ?</p>
@@ -176,7 +214,6 @@ export default function DialogTable(props) {
       </Button>
     </div>
   );
-  
   return (
     <div style={{ maxWidth: "100%" }}>
       {selectedRow && (
@@ -290,19 +327,38 @@ export default function DialogTable(props) {
               <Modal
                   open={openModal}
                   onClose={handleClose}
-                  aria-labelledby="simple-modal-title"
-                  aria-describedby="simple-modal-description"
+                  aria-labelledby="ModalPasswordChange"
+                  aria-describedby="ModalPasswordChange"
                 >
                   {body}
-                </Modal>
-                <Modal
-                  open={openModalDelete}
-                  onClose={handleClose}
-                  aria-labelledby="simple-modal-title"
-                  aria-describedby="simple-modal-description"
-                >
-                  {bodyDelete}
-                </Modal>
+              </Modal>
+              <Modal
+                open={openModalDelete}
+                onClose={handleClose}
+                aria-labelledby="ModalDeleteProfil"
+                aria-describedby="ModalDeleteProfil"
+              >
+                {bodyDelete}
+              </Modal>
+              <Typography variant="h6"gutterBottom>Groupe et permissions</Typography>
+              <br/>
+              <Typography variant="subtitle1"gutterBottom>Groupe</Typography>
+              <br/>
+              <TransferList
+                title="groupes"
+                value={group}
+                userValue={[]}
+                onChangeValue={handleChangeUserGroup}
+              />
+              <br/>
+              <Typography variant="subtitle1"gutterBottom>Permissions</Typography>
+              <br/>
+              <TransferList
+                title="permissions"
+                value={permissions}
+                onChangeValue={handleChangeUserPermissions}
+                userValue={selectedRow.permissions.permissions}
+              />
             </Container>
           </DialogContent>
         </Dialog>

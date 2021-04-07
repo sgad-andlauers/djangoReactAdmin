@@ -78,7 +78,19 @@ export default function DashBoard(props) {
 
   });
   const [permissionGroup, setPermissionGroup]= useState(null);
-
+  console.log("modificatedGroup", modificatedGroup)
+  const [userGroup, setUserGroup] = useState({
+    userId: null,
+    type: "",
+    object: "",
+    objectId: []
+  })
+  const [userPermissions, setUserPermissions] = useState({
+    userId: null,
+    type: "",
+    object: "",
+    objectId: []
+  })
 /** -------------------------------------------------- Questionnement de l'Api ------------------------------------------------------------ */
   const getAPIData = async () => {
     const res = await axios.get(`${api.urlGetUser}`);
@@ -98,7 +110,8 @@ export default function DashBoard(props) {
   }, []);
   const getAPIDataGroup = async () => {
     const res = await axios.get(`${api.urlGroup}`);
-    setApiDataGroup(res.data.data.groups)
+    setApiDataGroup(res.data.data.groups);
+    
   };
   useEffect(() => {
     console.log("getApiDataGroup");
@@ -113,6 +126,7 @@ export default function DashBoard(props) {
     getAPIDataPermissions();
   }, []);
 console.log("permission", apiDataPermissions);
+console.log("groupe", apiDataGroup);
   /** -------------------------------------------------- Fin du questionnement de l'Api ------------------------------------------------------------ */
   /** -------------------------------------------------- Function pour le template addAcount ------------------------------------------------------------ */
 
@@ -156,6 +170,24 @@ console.log("permission", apiDataPermissions);
     setInseeCode(city);
 
   }
+  const handleChangeUserGroup = (group)=>{
+    let array = [];
+    group && group.map((d)=>array.push(d.id));
+    userGroup.type = "add";
+    userGroup.object = "group";
+    userGroup.objectId = array;
+    setUserGroup(userGroup);
+  }
+  const handleChangeUserPermissions= (perm)=>{
+    let array = [];
+    perm && 
+    perm.map((d)=>array.push(d.id));
+    userPermissions.type = "add"
+    userPermissions.object = "permissions";
+    userPermissions.objectId = array;
+    setUserPermissions(userPermissions);
+    console.log("userPermission",userPermissions)
+  }
   useEffect(() => {
     console.log("getCitiesInProfils");
     let array = [];
@@ -173,13 +205,23 @@ console.log("permission", apiDataPermissions);
       changeCities={handleChangeCities}
       permissions={apiDataPermissions}
       group={apiDataGroup}
+      onChangeGroupUser={handleChangeUserGroup}
+      onChangeUserPermissions={handleChangeUserPermissions}
     />
   );
+ 
   const postAccount = async ()=> {
     console.log("postAccount")
 
     await axios.post('https://dev.geo.sdis67.com/api/v1/public/user', profils).then(res => {
+      setUserPermissions({...userPermissions, user:res.data.data});
+      setUserGroup({...userGroup, userId:res.data.data});
+    });
+    await axios.post('https://dev.geo.sdis67.com/api/v1/public/relations', userGroup).then(res => {
+      console.log(res);});
+    await axios.post('https://dev.geo.sdis67.com/api/v1/public/relations', userPermissions).then(res => {
       console.log(res);})
+    setOpenAddAccount(false)
   }
   /** -------------------------------------------------- Fin des functions pour le template addAcount ------------------------------------------------------------ */
   /** ----------------------------------------------------------- Function for group create ---------------------------------------------------------------------- */
@@ -210,6 +252,8 @@ console.log("permission", apiDataPermissions);
     console.log("getModificateId");
     if(selectedGroup != null){
       modificatedGroup.id = selectedGroup.id;
+      modificatedGroup.name = selectedGroup.name;
+      modificatedGroup.permissions = selectedGroup.permissions
     setModificatedGroup(modificatedGroup);
   }
   }, [modificatedGroup, selectedGroup]);
@@ -221,8 +265,10 @@ console.log("permission", apiDataPermissions);
   };
   const handleModificateGroup =(event)=> {
     if (event.target.name === "name") {
-      modificatedGroup.name = event.target.value;
-      
+      if (event.target.value === null){
+        modificatedGroup.name = selectedGroup.groupRelated.name;
+      }else{
+      modificatedGroup.name = event.target.value;}
     }
     setModificatedGroup(modificatedGroup);
   };
@@ -234,11 +280,15 @@ const handleSubmitGroup =async ()=>{
   setOpenGroup(false);
 };
 const handleSaveGroup =async ()=>{
-  console.log("postGroupe")
+  console.log("putGroupe")
   await axios.put('https://dev.geo.sdis67.com/api/v1/public/group', modificatedGroup)
   setOpenGroup(false);
 };
   /** ---------------------------------------------------Fin des functions for group create ---------------------------------------------------------------------- */
+  /** --------------------------------------------------- Add permissions & groups for user ---------------------------------------------------------------------- */
+  const HandleChangeUserPermissions = (e)=>{
+    alert('jajoute les perms')
+  }
   return (
     <div>
       <Grid container spacing={3}>
@@ -278,7 +328,7 @@ const handleSaveGroup =async ()=>{
             {apiDataGroup &&
               apiDataGroup.map((data) => {
                 return (
-                  <div key={data.groupRelated.id}>
+                  <div key={data.id}>
                     <Button
                       onClick={(e) => {
                       handleClickSetDialogGroup(data);
@@ -290,7 +340,7 @@ const handleSaveGroup =async ()=>{
                             <ListItemAvatar>
                               <Avatar>Nom</Avatar>
                               </ListItemAvatar>
-                              <ListItemText primary={`Nom:  ${data.groupRelated.name}`} />
+                              <ListItemText primary={`Nom:  ${data.name}`} />
                             </ListItem>
                           </List>
                       </Paper>
@@ -310,6 +360,7 @@ const handleSaveGroup =async ()=>{
             setOpen={setOpenAccount}
             permissions={apiDataPermissions}
             group={apiDataGroup}
+            onChangeUserPermissions ={HandleChangeUserPermissions}
           />
         </div>
       )}
