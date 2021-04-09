@@ -19,7 +19,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import DeleteForeverOutlinedIcon from '@material-ui/icons/DeleteForeverOutlined';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import { makeStyles } from '@material-ui/core/styles';
-import TransferList from "./transferList";
+import TransferList from "../addTranferListTemplate";
 import axios from "axios";
 function rand() {
   return Math.round(Math.random() * 20) - 10;
@@ -63,8 +63,8 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-export default function DialogTable(props) {
-  const { selectedRow, open, city , onClickClose, setOpen, permissions, group } = props;
+export default function UpdatedAccountTemplate(props) {
+  const { selectedRow, open, city , onClickClose, setOpen, permissions, group, urlPostUser, urlPostRelations } = props;
   const [openModal, setOpenModal] = React.useState(false);
   const [openModalDelete, setOpenModalDelete] = React.useState(false);
   const classes = useStyles();
@@ -130,14 +130,14 @@ export default function DialogTable(props) {
   }
   const putPasswordsApi = async ()=>{
     console.log("putPassword")
-    await axios.put('https://dev.geo.sdis67.com/api/v1/public/user', password);
+    await axios.put(urlPostUser, password);
     setOpenModal(false)
   };
   const putIdentityApi = async ()=>{
     console.log("putIdentity")
-     await axios.put('https://dev.geo.sdis67.com/api/v1/public/user', identity);
-     await axios.put("https://dev.geo.sdis67.com/api/v1/public/relations", userGroup);
-     await axios.put("https://dev.geo.sdis67.com/api/v1/public/relations", userPermissions);
+     await axios.put(urlPostUser, identity);
+     await axios.put(urlPostRelations, userGroup);
+     await axios.put(urlPostRelations, userPermissions);
      setOpen(false);
   };
   const body = (
@@ -145,6 +145,7 @@ export default function DialogTable(props) {
       <Grid container spacing={3}>
         <Grid item xs={12} >
           <TextField
+            type="password"
             id="PWD"
             name="oldPassword"
             label="Ancien mot de passe"
@@ -156,6 +157,7 @@ export default function DialogTable(props) {
         </Grid>
         <Grid item xs={12} >
           <TextField
+            type="password"
             id="PWD1"
             name="password"
             label="changer de mot de passe"
@@ -167,6 +169,7 @@ export default function DialogTable(props) {
         </Grid>
         <Grid item xs={12} >
           <TextField
+            type="password"
             id="PWD2"
             name="PWD2"
             label="confirme nouveau mot de passe"
@@ -319,9 +322,9 @@ const handleChangeUserPermissions= (perm)=>{
                   />
                 </Grid>
                 <Grid item xs={12}>
-                  <button type="button" onClick={handleOpen}>
+                  <Button type="button" onClick={handleOpen}>
                     changer de Mot de passe
-                  </button>
+                  </Button>
                 </Grid>
               </Grid>
               <Modal

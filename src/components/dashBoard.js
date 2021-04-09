@@ -1,408 +1,186 @@
-import React , {useEffect, useState}from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import Dialog from '@material-ui/core/Dialog';
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import IconButton from '@material-ui/core/IconButton';
-import CloseIcon from '@material-ui/icons/Close';
-import Slide from '@material-ui/core/Slide';
-import AccountTemplate from './Template/accountTemplate';
-import AddAccountTemplate from './Template/addAccountTemplate';
-import GroupTemplate from './Template/groupTemplate';
-import Typography from '@material-ui/core/Typography';
-import axios from "axios";
-import Box from '@material-ui/core/Box';
+import React from "react";
+import clsx from "clsx";
+import { makeStyles } from "@material-ui/core/styles";
+import CssBaseline from "@material-ui/core/CssBaseline";
+import Drawer from "@material-ui/core/Drawer";
+import AppBar from "@material-ui/core/AppBar";
+import Toolbar from "@material-ui/core/Toolbar";
+import List from "@material-ui/core/List";
+import Divider from "@material-ui/core/Divider";
+import IconButton from "@material-ui/core/IconButton";
+import Container from "@material-ui/core/Container";
+import Grid from "@material-ui/core/Grid";
+import Paper from "@material-ui/core/Paper";
+import MenuIcon from "@material-ui/icons/Menu";
+import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import {mainListItems} from "./listItem";
+import ReadAcceuilTemplate from "./Template/readAcceuilTemplate";
+import ReadAccountTemplate from "./Template/account/readAccountTemplate";
+import AddAccountTemplate from "./Template/account/addAccountTemplate";
+import ReadGroupTemplate from "./Template/group/readGroupTemplate";
+import AddGroupTemplate from "./Template/group/addGroupTemplate";
 
-import {
-  Button,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  Avatar,
-  Paper,
-  Grid
-} from "@material-ui/core";
+const drawerWidth = 240;
+
 const useStyles = makeStyles((theme) => ({
+  root: {
+    display: "flex"
+  },
+  toolbar: {
+    paddingRight: 24 // keep right padding when drawer closed
+  },
+  toolbarIcon: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    padding: "0 8px",
+    ...theme.mixins.toolbar
+  },
   appBar: {
-    position: 'relative',
+    zIndex: theme.zIndex.drawer + 1,
+    transition: theme.transitions.create(["width", "margin"], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen
+    })
+  },
+  appBarShift: {
+    marginLeft: drawerWidth,
+    width: `calc(100% - ${drawerWidth}px)`,
+    transition: theme.transitions.create(["width", "margin"], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen
+    })
+  },
+  menuButton: {
+    marginRight: 36
+  },
+  menuButtonHidden: {
+    display: "none"
   },
   title: {
-    marginLeft: theme.spacing(2),
-    flex: 1,
+    flexGrow: 1
   },
+  drawerPaper: {
+    position: "relative",
+    whiteSpace: "nowrap",
+    width: drawerWidth,
+    transition: theme.transitions.create("width", {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen
+    })
+  },
+  drawerPaperClose: {
+    overflowX: "hidden",
+    transition: theme.transitions.create("width", {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen
+    }),
+    width: theme.spacing(7),
+    [theme.breakpoints.up("sm")]: {
+      width: theme.spacing(9)
+    }
+  },
+  appBarSpacer: theme.mixins.toolbar,
+  content: {
+    flexGrow: 1,
+    height: "100vh",
+    overflow: "auto"
+  },
+  container: {
+    paddingTop: theme.spacing(4),
+    paddingBottom: theme.spacing(4)
+  },
+  paper: {
+    padding: theme.spacing(2),
+    display: "flex",
+    overflow: "auto",
+    flexDirection: "column"
+  },
+  fixedHeight: {
+    height: 80
+  }
 }));
 
-const Transition = React.forwardRef(function Transition(props, ref) {
-  return <Slide direction="up" ref={ref} {...props} />;
-});
-
-const api = {
-  urlGetUser: "https://dev.geo.sdis67.com/api/v1/public/allUsers",
-  urlGetCities: "https://dev.geo.sdis67.com/api/v1/app/erp/cities",
-  urlGroup: "https://dev.geo.sdis67.com/api/v1/public/group",
-  urlGetPermissions: "https://dev.geo.sdis67.com/api/v1/public/permissions",
-};
-export default function DashBoard(props) {
+export default function Dashboard() {
   const classes = useStyles();
-  const [selectedRow, setSelectedRow] = useState(null);
-  const [selectedGroup, setSelectedGroup] = useState(null);
-  const [openAccount, setOpenAccount] = useState(false);
-  const [openGroup, setOpenGroup] = useState(false);
-  const [apiData, setApiData]= useState(null);
-  const [cities, setCities]= useState(null);
-  const [apiDataGroup, setApiDataGroup] = useState(null);
-  const [apiDataPermissions, setApiDataPermissions]= useState(null);
-  const [openAddAccount, setOpenAddAccount] = React.useState(false);
-  const [inseeCode, setInseeCode] = useState(null);
-  const [profils, setProfils] = React.useState({
-    username: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-    registrationNumber: "",
-    cities: [],
-    password: null,
-    company: "",
-    territorialUnity: "",
-  });
-  const [createGroup, setCreateGroup] = useState({
-    name: "",
-    permissions:[],
+  const [open, setOpen] = React.useState(true);
+  const handleDrawerOpen = () => {
+    setOpen(true);
+  };
+  const handleDrawerClose = () => {
+    setOpen(false);
+  };
 
-  });
-  const [modificatedGroup, setModificatedGroup] = useState({
-    id: null,
-    name: "",
-    permissions:[],
-
-  });
-  const [permissionGroup, setPermissionGroup]= useState(null);
-  console.log("modificatedGroup", modificatedGroup)
-  const [userGroup, setUserGroup] = useState({
-    userId: null,
-    type: "",
-    object: "",
-    objectId: []
-  })
-  const [userPermissions, setUserPermissions] = useState({
-    userId: null,
-    type: "",
-    object: "",
-    objectId: []
-  })
-/** -------------------------------------------------- Questionnement de l'Api ------------------------------------------------------------ */
-  const getAPIData = async () => {
-    const res = await axios.get(`${api.urlGetUser}`);
-    setApiData(res.data.data)
-  };
-  useEffect(() => {
-    console.log("getApiUser");
-    getAPIData();
-  }, []);
-  const getApiCities = async () => {
-    const res = await axios.get(`${api.urlGetCities}`);
-    setCities(res.data.data.cities);
-  }
-  useEffect(() => {
-    console.log("getApiCities");
-    getApiCities();
-  }, []);
-  const getAPIDataGroup = async () => {
-    const res = await axios.get(`${api.urlGroup}`);
-    setApiDataGroup(res.data.data.groups);
-    
-  };
-  useEffect(() => {
-    console.log("getApiDataGroup");
-    getAPIDataGroup();
-  }, []);
-  const getAPIDataPermissions = async () => {
-    const res = await axios.get(`${api.urlGetPermissions}`);
-    setApiDataPermissions(res.data.data.permissions);
-  };
-  useEffect(() => {
-    console.log("getApiDataPermissions");
-    getAPIDataPermissions();
-  }, []);
-console.log("permission", apiDataPermissions);
-console.log("groupe", apiDataGroup);
-  /** -------------------------------------------------- Fin du questionnement de l'Api ------------------------------------------------------------ */
-  /** -------------------------------------------------- Function pour le template addAcount ------------------------------------------------------------ */
-
-  const handleClickSetDialog = (e, data) => {
-    setOpenAccount(true);
-    setSelectedRow(data);
-    
-  };
-  const handleClickOpenAddAccount = () => {
-    setOpenAddAccount(true);
-  };
-  const handleClose = () => {
-    setOpenAccount(false);
-    setOpenAddAccount(false);
-    setOpenGroup(false);
-  };
- 
-  const handleChangeProfils = ( event) => {
-    if(event.target.name === "username") {
-      profils.username = event.target.value;
-    }else if (event.target.name === "firstName"){
-      profils.firstName = event.target.value;
-    }else if(event.target.name === "lastName") {
-      profils.lastName = event.target.value;
-    }else if(event.target.name === "email"){
-      profils.email= event.target.value;
-    }else if (event.target.name === "registrationNumber"){
-      profils.registrationNumber = event.target.value;
-    }else if (event.target.name === "password"){
-      profils.password = event.target.value;
-    }else if (event.target.name === "company"){
-      profils.company = event.target.value;
-    }else if (event.target.name === "territorialUnity"){
-      profils.territorialUnity = event.target.value;
-    }
-    setProfils(profils);
-  };
-  
-  const handleChangeCities =(event, value, reason) => {
-      let city = value;
-    setInseeCode(city);
-
-  }
-  const handleChangeUserGroup = (group)=>{
-    let array = [];
-    group && group.map((d)=>array.push(d.id));
-    userGroup.type = "add";
-    userGroup.object = "group";
-    userGroup.objectId = array;
-    setUserGroup(userGroup);
-  }
-  const handleChangeUserPermissions= (perm)=>{
-    let array = [];
-    perm && 
-    perm.map((d)=>array.push(d.id));
-    userPermissions.type = "add"
-    userPermissions.object = "permissions";
-    userPermissions.objectId = array;
-    setUserPermissions(userPermissions);
-    console.log("userPermission",userPermissions)
-  }
-  useEffect(() => {
-    console.log("getCitiesInProfils");
-    let array = [];
-    inseeCode && 
-    inseeCode.map((d)=>array.push(d.inseeCode));
-    console.log("arrayInseeCode", array);
-    profils.cities= array;
-    setProfils(profils);
-   
-  }, [inseeCode, profils]);
-  const addAcount = (
-    <AddAccountTemplate 
-      city={cities} 
-      changeProfils={handleChangeProfils} 
-      changeCities={handleChangeCities}
-      permissions={apiDataPermissions}
-      group={apiDataGroup}
-      onChangeGroupUser={handleChangeUserGroup}
-      onChangeUserPermissions={handleChangeUserPermissions}
-    />
-  );
- 
-  const postAccount = async ()=> {
-    console.log("postAccount")
-
-    await axios.post('https://dev.geo.sdis67.com/api/v1/public/user', profils).then(res => {
-      setUserPermissions({...userPermissions, user:res.data.data});
-      setUserGroup({...userGroup, userId:res.data.data});
-    });
-    await axios.post('https://dev.geo.sdis67.com/api/v1/public/relations', userGroup).then(res => {
-      console.log(res);});
-    await axios.post('https://dev.geo.sdis67.com/api/v1/public/relations', userPermissions).then(res => {
-      console.log(res);})
-    setOpenAddAccount(false)
-  }
-  /** -------------------------------------------------- Fin des functions pour le template addAcount ------------------------------------------------------------ */
-  /** ----------------------------------------------------------- Function for group create ---------------------------------------------------------------------- */
-  const handleClickSetDialogGroup = (data)=> {
-    setOpenGroup(true);
-    setSelectedGroup(data);
-    
-
-  };
-  console.log("selectedGroup", selectedGroup);
-  const handleChangePermissionsGroup = (event, value, reason)=>{
-    let permissions = value;
-    setPermissionGroup(permissions);
-
-  };
-  useEffect(() => {
-    console.log("getPermissionGroup");
-    let array = [];
-    permissionGroup && 
-    permissionGroup.map((d)=>array.push(d.id));
-    createGroup.permissions = array;
-    modificatedGroup.permissions = array;
-    setModificatedGroup(modificatedGroup);
-    setCreateGroup(createGroup);
-   
-  }, [permissionGroup, createGroup, modificatedGroup]);
-  useEffect(() => {
-    console.log("getModificateId");
-    if(selectedGroup != null){
-      modificatedGroup.id = selectedGroup.id;
-      modificatedGroup.name = selectedGroup.name;
-      modificatedGroup.permissions = selectedGroup.permissions
-    setModificatedGroup(modificatedGroup);
-  }
-  }, [modificatedGroup, selectedGroup]);
-  const handleChangeGroup =(event)=> {
-    if (event.target.name === "name") {
-      createGroup.name = event.target.value;
-    }
-    setCreateGroup(createGroup);
-  };
-  const handleModificateGroup =(event)=> {
-    if (event.target.name === "name") {
-      if (event.target.value === null){
-        modificatedGroup.name = selectedGroup.groupRelated.name;
-      }else{
-      modificatedGroup.name = event.target.value;}
-    }
-    setModificatedGroup(modificatedGroup);
-  };
-const handleSubmitGroup =async ()=>{
-  console.log("postGroupe")
-  await axios.post('https://dev.geo.sdis67.com/api/v1/public/group', createGroup).then(res => {   
-    console.log(res);
-  });
-  setOpenGroup(false);
-};
-const handleSaveGroup =async ()=>{
-  console.log("putGroupe")
-  await axios.put('https://dev.geo.sdis67.com/api/v1/public/group', modificatedGroup)
-  setOpenGroup(false);
-};
-  /** ---------------------------------------------------Fin des functions for group create ---------------------------------------------------------------------- */
-  /** --------------------------------------------------- Add permissions & groups for user ---------------------------------------------------------------------- */
-  const HandleChangeUserPermissions = (e)=>{
-    alert('jajoute les perms')
-  }
   return (
-    <div>
-      <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>  
-            <Typography variant="subtitle1" className={classes.title}>
-              Liste des Utilisateurs
-            </Typography>
-            {apiData &&
-              apiData.map((data) => {
-                return (
-                  <div key={data.id}>
-                    <Button
-                      onClick={(e) => {
-                      handleClickSetDialog(e, data);
-                      }}
-                    >
-                      <Paper variant="outlined">
-                        <List dense>
-                          <ListItem >
-                            <ListItemAvatar>
-                              <Avatar>Nom</Avatar>
-                            </ListItemAvatar>
-                            <ListItemText primary={`Nom:  ${data.lastName}  ${data.firstName}`} />
-                          </ListItem>
-                        </List>
-                      </Paper>
-                    </Button>
-                    <br/>
-                  </div>
-                );
-            })}
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle1" className={classes.title}>
-              Liste des Groupes
-            </Typography>
-            {apiDataGroup &&
-              apiDataGroup.map((data) => {
-                return (
-                  <div key={data.id}>
-                    <Button
-                      onClick={(e) => {
-                      handleClickSetDialogGroup(data);
-                      }}
-                    >
-                      <Paper variant="outlined">
-                        <List dense>
-                          <ListItem >
-                            <ListItemAvatar>
-                              <Avatar>Nom</Avatar>
-                              </ListItemAvatar>
-                              <ListItemText primary={`Nom:  ${data.name}`} />
-                            </ListItem>
-                          </List>
-                      </Paper>
-                    </Button>
-                  </div>
-                );
-            })}
-          </Grid>
-      </Grid>
-      {selectedRow && (
-        <div>
-          <AccountTemplate
-            selectedRow={selectedRow}
-            open={openAccount}
-            onClickClose={handleClose}
-            city={cities}
-            setOpen={setOpenAccount}
-            permissions={apiDataPermissions}
-            group={apiDataGroup}
-            onChangeUserPermissions ={HandleChangeUserPermissions}
-          />
-        </div>
-      )}
-      <Box display="flex">
-        <Box mt={5} mb={5}>
-          <Button variant="outlined" color="primary" onClick={handleClickSetDialogGroup}>
-          Creation de groupe
-          </Button>
-        </Box>
-          <GroupTemplate
-            open={openGroup}
-            onClickClose={handleClose}
-            permissions={apiDataPermissions}
-            onChangeGroupe = {handleChangeGroup}
-            onChangePermissionsGroup={handleChangePermissionsGroup}
-            onSubmitGroup={handleSubmitGroup}
-            selectedGroup={selectedGroup}
-            onSaveGroup={handleSaveGroup}
-            onModificateGroup={handleModificateGroup}
-          />
-        <Box ml={5} mt={5}>
-          <Button variant="outlined" color="primary" onClick={handleClickOpenAddAccount}>
-            Ajouter un profil
-          </Button>
-        </Box>
-        <Dialog fullScreen open={openAddAccount} onClose={handleClose} TransitionComponent={Transition}>
-          <AppBar className={classes.appBar}>
-            <Toolbar>
-              <IconButton edge="start" color="inherit" onClick={handleClose} aria-label="close">
-                <CloseIcon />
-              </IconButton>
-              <Typography variant="h6" className={classes.title}>
-                Ajout d'un profil
-              </Typography>
-              <Button autoFocus color="inherit" onClick={postAccount} edge="endpoint">
-                Sauvegarder
-              </Button>
-            </Toolbar>
-          </AppBar>
-          {addAcount}
-        </Dialog>
-      </Box>
+    <div className={classes.root}>
+      <Router>
+        <CssBaseline />
+        <AppBar
+          position="absolute"
+          className={clsx(classes.appBar, open && classes.appBarShift)}
+        >
+          <Toolbar className={classes.toolbar}>
+            <IconButton
+              edge="start"
+              color="inherit"
+              aria-label="open drawer"
+              onClick={handleDrawerOpen}
+              className={clsx(
+                classes.menuButton,
+                open && classes.menuButtonHidden
+              )}
+            >
+              <MenuIcon />
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+        <Drawer
+          variant="permanent"
+          classes={{
+            paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose)
+          }}
+          open={open}
+        >
+          <div className={classes.toolbarIcon}>
+            <IconButton onClick={handleDrawerClose}>
+              <ChevronLeftIcon />
+            </IconButton>
+          </div>
+          <Divider />
+          <List>{mainListItems}</List>
+          <Divider />
+        </Drawer>
+        <main className={classes.content}>
+          <div className={classes.appBarSpacer} />
+          <Container maxWidth="lg" className={classes.container}>
+            <Grid container spacing={3}>
+              {/*Affichage principale */}
+              <Grid item xs={12}>
+                <Paper className={classes.paper}>
+                  <Switch>
+                    <Route exact path="/">
+                      <ReadAcceuilTemplate/>
+                    </Route>
+                    <Route exact path="/users">
+                      <ReadAccountTemplate/>
+                    </Route>
+                    <Route exact path="/groups">
+                      <ReadGroupTemplate/>
+                    </Route>
+                    <Route exact path="/addUsers">
+                      <AddAccountTemplate/>
+                    </Route>
+                    <Route exact path="/addGroups">
+                      <AddGroupTemplate/>
+                    </Route>
+                  </Switch>
+                </Paper>
+              </Grid>
+            </Grid>
+          </Container>
+        </main>
+      </Router>
     </div>
   );
 }
